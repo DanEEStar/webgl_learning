@@ -16,6 +16,25 @@
         <link rel="stylesheet" href="styles/main.css">
         <!-- endbuild -->
 
+        <!-- Fragment Shader //-->
+        <script id="shader-fs" type="x-shader/x-fragment">
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+            void main(void) {
+                gl_FragColor = vec4(0.5,0.5,1.0, 1.0);
+            }
+        </script>
+
+        <!-- Vertex Shader //-->
+        <script id="shader-vs" type="x-shader/x-vertex">
+            attribute vec3 aVertexPosition;
+
+            void main(void) {
+                gl_Position = vec4(aVertexPosition,1.0);
+            }
+        </script>
+
     </head>
     <body>
         <!--[if lt IE 10]>
@@ -36,6 +55,7 @@
         <!-- endbuild -->
 
         <!-- build:js scripts/main.js -->
+        <script src="scripts/utils.js"></script>
         <script src="scripts/appbuild.js"></script>
         <!-- endbuild -->
 </body>

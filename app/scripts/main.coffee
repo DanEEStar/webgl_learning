@@ -2,28 +2,63 @@ class HelloWorld
   constructor: () ->
     console.log('hello world')
     @createWebGLContext()
-    window.onkeydown = _.bind(@checkKey, this)
+    @initShaders()
+    @createBuffers()
+
+  initShaders: () ->
+    fgShader = utils.getShader(@gl, "shader-fs");
+    vxShader = utils.getShader(@gl, "shader-vs");
+
+    @prg = @gl.createProgram();
+    @gl.attachShader(@prg, vxShader);
+    @gl.attachShader(@prg, fgShader);
+    @gl.linkProgram(@prg);
+
+    if !@gl.getProgramParameter(@prg, @gl.LINK_STATUS)
+      console.log("Could not initialise shaders");
+
+    @gl.useProgram(@prg);
+
+    # The following lines allow us obtaining a reference to the uniforms and attributes defined in the shaders.
+    # This is a necessary step as the shaders are NOT written in JavaScript but in a
+    # specialized language called GLSL. More about this on chapter 3.
+    @prg.vertexPosition = @gl.getAttribLocation(@prg, "aVertexPosition");
 
   createWebGLContext: () ->
-    canvas = document.getElementById("canvas")
-    unless canvas
-      console.log('there is no canvas on this page')
-      return
+    @gl = utils.getGLContext('canvas')
 
-    names = ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl']
+  createBuffers: () ->
+    @vertices =  [
+      -0.5,0.5,0.0,
+      -0.5,-0.5,0.0,
+      0.5,-0.5,0.0,
+      0.5,0.5,0.0
+    ]
+    @indices = [3,2,1,3,1,0]
 
-    for name in names
-      try
-        gl = canvas.getContext(name)
-      catch e
-      if gl
-        break
+    @coneVBO = @gl.createBuffer()
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, @coneVBO)
+    @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(@vertices), @gl.STATIC_DRAW)
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, null)
 
-    unless gl
-      console.log("WebGL is not available")
-    else
-      @gl = gl
-      console.log("Hooray! You got a WebGL context")
+    @coneIBO = @gl.createBuffer()
+    @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, @coneIBO)
+    @gl.bufferData(@gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@indices), @gl.STATIC_DRAW)
+    @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, null)
+
+  drawScene: () ->
+    @gl.clearColor(0, 0, 0, 1)
+    @gl.enable(@gl.DEPTH_TEST)
+
+    @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT);
+    @gl.viewport(0,0,c_width, c_height);
+
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, @coneVBO);
+    @gl.vertexAttribPointer(@prg.aVertexPosition, 3, @gl.FLOAT, false, 0, 0);
+    @gl.enableVertexAttribArray(@prg.vertexPosition);
+
+    @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, @coneIBO);
+    @gl.drawElements(@gl.TRIANGLES, @indices.length, @gl.UNSIGNED_SHORT,0);
 
   checkKey: (evt) ->
     switch evt.keyCode
@@ -37,3 +72,8 @@ class HelloWorld
 
 
 hl = new HelloWorld()
+renderLoop = () ->
+  utils.requestAnimFrame(renderLoop)
+  hl.drawScene()
+
+renderLoop()
