@@ -17,23 +17,30 @@
         <!-- endbuild -->
 
         <!-- Fragment Shader //-->
-        <script id="shader-fs" type="x-shader/x-fragment">
-            #ifdef GL_ES
-            precision highp float;
-            #endif
-            void main(void) {
-                gl_FragColor = vec4(0.5,0.5,1.0, 1.0);
-            }
-        </script>
+        <script id='shader-fs' type='x-shader/x-fragment'>
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    uniform vec3 modelColor;
+
+    void main(void) {
+        gl_FragColor = vec4(modelColor, 1.0);
+    }
+</script>
 
         <!-- Vertex Shader //-->
-        <script id="shader-vs" type="x-shader/x-vertex">
-            attribute vec3 aVertexPosition;
+        <script id='shader-vs' type='x-shader/x-vertex'>
+    attribute vec3 aVertexPosition;
 
-            void main(void) {
-                gl_Position = vec4(aVertexPosition,1.0);
-            }
-        </script>
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_PointSize = 3.0;
+    }
+</script>
 
     </head>
     <body>
@@ -52,6 +59,7 @@
         <!-- build:js scripts/vendor.js -->
         <script src="bower_components/jquery/dist/jquery.js"></script>
         <script src="bower_components/lodash/dist/lodash.js"></script>
+        <script src="bower_components/gl-matrix/dist/gl-matrix.js"></script>
         <!-- endbuild -->
 
         <!-- build:js scripts/main.js -->
