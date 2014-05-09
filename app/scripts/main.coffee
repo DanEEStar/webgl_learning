@@ -3,12 +3,14 @@ class HelloWorld
     console.log('hello world')
     @createWebGLContext()
     @initShaders()
+    @initLights()
 
     @model = null
     @loadBuffers('scripts/cone.json')
 
     @pMatrix = mat4.create()
     @mvMatrix = mat4.create()
+    @nMatrix = mat4.create()
 
   initShaders: () ->
     fgShader = utils.getShader(@gl, 'shader-fs');
@@ -21,10 +23,21 @@ class HelloWorld
 
     @gl.useProgram(@prg);
 
-    @prg.vertexPositionAttribute = @gl.getAttribLocation(@prg, 'aVertexPosition');
-    @prg.pMatrixUniform = @gl.getUniformLocation(@prg, 'uPMatrix');
-    @prg.mvMatrixUniform = @gl.getUniformLocation(@prg, 'uMVMatrix');
-    @prg.modelColor = @gl.getUniformLocation(@prg, 'modelColor');
+    @prg.uPMatrix = @gl.getUniformLocation(@prg, 'uPMatrix')
+    @prg.uMVMatrix = @gl.getUniformLocation(@prg, 'uMVMatrix')
+    @prg.uNMatrix = @gl.getUniformLocation(@prg, 'uNMatrix')
+
+    @prg.aVertexPosition  = @gl.getAttribLocation(@prg, "aVertexPosition")
+    @prg.aVertexNormal  = @gl.getAttribLocation(@prg, "aVertexNormal")
+
+    @prg.uMaterialDiffuse  = @gl.getUniformLocation(@prg, "uMaterialDiffuse");
+    @prg.uLightDiffuse     = @gl.getUniformLocation(@prg, "uLightDiffuse");
+    @prg.uLightDirection   = @gl.getUniformLocation(@prg, "uLightDirection");
+
+  initLights: () ->
+    @gl.uniform3fv(@prg.uLightDirection,    [0.0, -1.0, -1.0]);
+    @gl.uniform4fv(@prg.uLightDiffuse,      [1.0,1.0,1.0,1.0]);
+    @gl.uniform4fv(@prg.uMaterialDiffuse,   [0.5,0.8,0.1,1.0]);
 
   createWebGLContext: () ->
     @gl = utils.getGLContext('canvas')
@@ -36,9 +49,15 @@ class HelloWorld
 
   createBuffers: (model) ->
     @model = model
+    @model.normals = utils.calculateNormals(@model.vertices, @model.indices)
+
     @modelVertexBuffer = @gl.createBuffer()
     @gl.bindBuffer(@gl.ARRAY_BUFFER, @modelVertexBuffer)
     @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(@model.vertices), @gl.STATIC_DRAW)
+
+    @modelNormalBuffer = @gl.createBuffer()
+    @gl.bindBuffer(@gl.ARRAY_BUFFER, @modelNormalBuffer)
+    @gl.bufferData(@gl.ARRAY_BUFFER, new Float32Array(@model.normals), @gl.STATIC_DRAW)
     @gl.bindBuffer(@gl.ARRAY_BUFFER, null)
 
     @modelIndexBuffer = @gl.createBuffer()
@@ -46,31 +65,37 @@ class HelloWorld
     @gl.bufferData(@gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(@model.indices), @gl.STATIC_DRAW)
     @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, null)
 
-    @gl.uniform3f(@prg.modelColor, @model.color[0], @model.color[1], @model.color[2]);
-
   drawScene: () ->
     @gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    @gl.enable(@gl.DEPTH_TEST);
+    @gl.clearDepth(100.0)
+    @gl.depthFunc(@gl.LEQUAL)
+    @gl.enable(@gl.DEPTH_TEST)
+    @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT)
+    @gl.viewport(0,0,c_width, c_height)
 
-    @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT);
-    @gl.viewport(0,0,c_width, c_height);
+    mat4.perspective(@pMatrix, 45, c_width / c_height, 0.1, 10000.0)
+    mat4.identity(@mvMatrix)
+    mat4.translate(@mvMatrix, @mvMatrix, [0.0, 0.0, -5.0])
+    @gl.uniformMatrix4fv(@prg.uPMatrix, false, @pMatrix)
+    @gl.uniformMatrix4fv(@prg.uMVMatrix, false, @mvMatrix)
 
-    mat4.perspective(@pMatrix, 45, c_width / c_height, 0.1, 10000.0);
-    mat4.identity(@mvMatrix);
-    mat4.translate(@mvMatrix, @mvMatrix, [0.0, 0.0, -5.0]);
+    mat4.copy(@nMatrix, @mvMatrix)
+    mat4.invert(@nMatrix, @nMatrix)
+    mat4.transpose(@nMatrix, @nMatrix)
+    @gl.uniformMatrix4fv(@prg.uNMatrix, false, @nMatrix)
 
-    @gl.uniformMatrix4fv(@prg.pMatrixUniform, false, @pMatrix);
-    @gl.uniformMatrix4fv(@prg.mvMatrixUniform, false, @mvMatrix);
-
-    @gl.enableVertexAttribArray(@prg.vertexPositionAttribute);
+    @gl.enableVertexAttribArray(@prg.aVertexPosition)
+    @gl.enableVertexAttribArray(@prg.aVertexNormal)
 
     if @model
       @gl.bindBuffer(@gl.ARRAY_BUFFER, @modelVertexBuffer);
       @gl.vertexAttribPointer(@prg.aVertexPosition, 3, @gl.FLOAT, false, 0, 0);
-      @gl.enableVertexAttribArray(@prg.vertexPosition);
+
+      @gl.bindBuffer(@gl.ARRAY_BUFFER, @modelNormalBuffer);
+      @gl.vertexAttribPointer(@prg.aVertexNormal, 3, @gl.FLOAT, false, 0, 0);
 
       @gl.bindBuffer(@gl.ELEMENT_ARRAY_BUFFER, @modelIndexBuffer);
-      @gl.drawElements(@gl.LINE_STRIP, @model.indices.length, @gl.UNSIGNED_SHORT,0);
+      @gl.drawElements(@gl.TRIANGLES, @model.indices.length, @gl.UNSIGNED_SHORT,0);
 
   checkKey: (evt) ->
     switch evt.keyCode

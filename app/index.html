@@ -17,29 +17,50 @@
         <!-- endbuild -->
 
         <!-- Fragment Shader //-->
-        <script id='shader-fs' type='x-shader/x-fragment'>
-    #ifdef GL_ES
-    precision highp float;
-    #endif
+        <script id="shader-fs" type="x-shader/x-fragment">
+#ifdef GL_ES
+precision highp float;
+#endif
 
-    uniform vec3 modelColor;
+varying vec4  vFinalColor;
 
-    void main(void) {
-        gl_FragColor = vec4(modelColor, 1.0);
-    }
+void main(void)  {
+ gl_FragColor = vFinalColor;
+}
 </script>
 
-        <!-- Vertex Shader //-->
-        <script id='shader-vs' type='x-shader/x-vertex'>
-    attribute vec3 aVertexPosition;
+        <script id="shader-vs" type="x-shader/x-vertex">
+attribute vec3 aVertexPosition;
+attribute vec3 aVertexNormal;
 
-    uniform mat4 uMVMatrix;
-    uniform mat4 uPMatrix;
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
+uniform mat4 uNMatrix;
 
-    void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-        gl_PointSize = 3.0;
-    }
+uniform vec3 uLightDirection;   //light direction
+uniform vec4 uLightDiffuse;     //light color
+uniform vec4 uMaterialDiffuse;  //object color
+
+varying vec4 vFinalColor;
+
+void main(void) {
+ //Transformed normal position
+ vec3 N = normalize(vec3(uNMatrix * vec4(aVertexNormal, 1.0)));
+
+ //Normalize light to calculate lambertTerm
+ vec3 L = normalize(uLightDirection);
+
+ //Lambert's cosine law
+ float lambertTerm = dot(N,-L);
+
+ //Final Color
+ vec4 Id = uMaterialDiffuse * uLightDiffuse * lambertTerm;
+ vFinalColor = Id;
+ vFinalColor.a = 1.0;
+
+  //Transformed vertex position
+  gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+}
 </script>
 
     </head>
