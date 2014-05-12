@@ -18,48 +18,19 @@
 
         <!-- Fragment Shader //-->
         <script id="shader-fs" type="x-shader/x-fragment">
-#ifdef GL_ES
-precision highp float;
-#endif
-
-varying vec4  vFinalColor;
-
+precision mediump float;
+uniform vec4 u_FragColor;
 void main(void)  {
- gl_FragColor = vFinalColor;
+ gl_FragColor = u_FragColor;
 }
 </script>
 
         <script id="shader-vs" type="x-shader/x-vertex">
-attribute vec3 aVertexPosition;
-attribute vec3 aVertexNormal;
-
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
-uniform mat4 uNMatrix;
-
-uniform vec3 uLightDirection;   //light direction
-uniform vec4 uLightDiffuse;     //light color
-uniform vec4 uMaterialDiffuse;  //object color
-
-varying vec4 vFinalColor;
-
+attribute vec4 a_Position;
+attribute float a_PointSize;
 void main(void) {
- //Transformed normal position
- vec3 N = normalize(vec3(uNMatrix * vec4(aVertexNormal, 1.0)));
-
- //Normalize light to calculate lambertTerm
- vec3 L = normalize(uLightDirection);
-
- //Lambert's cosine law
- float lambertTerm = dot(N,-L);
-
- //Final Color
- vec4 Id = uMaterialDiffuse * uLightDiffuse * lambertTerm;
- vFinalColor = Id;
- vFinalColor.a = 1.0;
-
-  //Transformed vertex position
-  gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+  gl_Position = a_Position;
+  gl_PointSize = a_PointSize;
 }
 </script>
 
@@ -84,7 +55,7 @@ void main(void) {
         <!-- endbuild -->
 
         <!-- build:js scripts/main.js -->
-        <script src="scripts/utils.js"></script>
+        <script src="scripts/libs/utils.js"></script>
         <script src="scripts/appbuild.js"></script>
         <!-- endbuild -->
 </body>
