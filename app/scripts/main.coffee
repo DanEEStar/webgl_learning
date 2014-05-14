@@ -5,9 +5,11 @@ class HelloWorld
     @prg = @initShaders(@gl)
     @numVertices = @initBuffers(@gl, @prg)
 
-    @tx = 0
-    @ty = 0
+    @tx = 0.3
+    @ty = 0.4
     @radianAngle = 0
+
+    @modelView = mat4.create()
 
     @canvas = document.getElementById('canvas')
     @canvas.onmousedown = (evt) =>
@@ -23,9 +25,7 @@ class HelloWorld
     gl.linkProgram(prg);
     gl.useProgram(prg);
 
-    prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
-    prg.uTranslation = gl.getUniformLocation(prg, 'uTranslation')
-    prg.uAngle = gl.getUniformLocation(prg, 'uAngle')
+    prg.uMatrix = gl.getUniformLocation(prg, 'uMatrix')
     return prg
 
   initBuffers: (gl, prg) ->
@@ -51,11 +51,17 @@ class HelloWorld
     return utils.getGLContext('canvas')
 
   drawScene: () ->
-    @tx += 0.001
-    @ty += 0.002
+    #@tx += 0.001
+    #@ty += 0.002
     @radianAngle += 0.005
-    @gl.uniform4f(@prg.uTranslation, @tx, @ty, 0.0, 0.0)
-    @gl.uniform1f(@prg.uAngle, @radianAngle)
+
+    mat4.identity(@modelView)
+    mat4.translate(@modelView, @modelView, [@tx, @ty, 0])
+    mat4.rotateZ(@modelView, @modelView, @radianAngle)
+    mat4.scale(@modelView, @modelView, [0.4, 1.4, 1])
+
+    @gl.uniformMatrix4fv(@prg.uMatrix, false, @modelView)
+
     @gl.clearColor(0.0, 0.0, 0.0, 1.0)
     @gl.clear(@gl.COLOR_BUFFER_BIT)
 

@@ -26,13 +26,9 @@ void main(void)  {
 
         <script id="shader-vs" type="x-shader/x-vertex">
 attribute vec4 a_Position;
-uniform vec4 uTranslation;
-uniform float uAngle;
+uniform mat4 uMatrix;
 void main(void) {
-  gl_Position.x = a_Position.x * cos(uAngle) - a_Position.y * sin(uAngle);
-  gl_Position.y = a_Position.x * sin(uAngle) + a_Position.y * cos(uAngle);
-  gl_Position.z = 0.0;
-  gl_Position.w = 1.0;
+  gl_Position = uMatrix * a_Position;
 }
 </script>
 
