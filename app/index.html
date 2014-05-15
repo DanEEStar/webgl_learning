@@ -19,16 +19,21 @@
         <!-- Fragment Shader //-->
         <script id="shader-fs" type="x-shader/x-fragment">
 precision mediump float;
+uniform sampler2D u_Sampler;
+varying vec2 v_TexCoord;
 void main(void)  {
- gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  gl_FragColor = texture2D(u_Sampler, v_TexCoord);
 }
 </script>
 
         <script id="shader-vs" type="x-shader/x-vertex">
 attribute vec4 a_Position;
+attribute vec2 a_TexCoord;
+varying vec2 v_TexCoord;
 uniform mat4 uMatrix;
 void main(void) {
   gl_Position = uMatrix * a_Position;
+  v_TexCoord = a_TexCoord;
 }
 </script>
 
@@ -38,7 +43,7 @@ void main(void) {
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <canvas id="canvas" width="800" height="600">
+        <canvas id="canvas" width="800" height="800">
             Your browser does not support canvas
         </canvas>
 
