@@ -72,7 +72,7 @@ utilsObject.prototype.getShader = function(gl, id) {
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
+        console.log(gl.getShaderInfoLog(shader));
         return null;
     }
     return shader;

@@ -69,7 +69,8 @@ class HelloWorld
     prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
     prg.a_TexCoord = gl.getAttribLocation(prg, 'a_TexCoord')
 
-    prg.u_Sampler = gl.getUniformLocation(prg, 'u_Sampler')
+    prg.u_Sampler1 = gl.getUniformLocation(prg, 'u_Sampler1')
+    prg.u_Sampler2 = gl.getUniformLocation(prg, 'u_Sampler2')
     return prg
 
   initBuffers: (gl, prg) ->
@@ -98,8 +99,18 @@ class HelloWorld
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, @loader.getImage('tex2'));
+    gl.uniform1i(prg.u_Sampler1, 0)
+
+    texture1 = gl.createTexture()
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
+    gl.activeTexture(gl.TEXTURE1)
+    gl.bindTexture(gl.TEXTURE_2D, texture1)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, @loader.getImage('tex1'));
-    gl.uniform1i(prg.u_Sampler, 0)
+    gl.uniform1i(prg.u_Sampler2, 1)
+
+
 
   createWebGLContext: () ->
     return utils.getGLContext('canvas')
@@ -124,7 +135,8 @@ class HelloWorld
     _.noop()
 
 loader = new AssetLoader()
-loader.addImage('tex1', '/images/stone.png')
+loader.addImage('tex1', '/images/sky.jpg')
+loader.addImage('tex2', '/images/circle.gif')
 loader.start(() ->
   hl = new HelloWorld(loader)
   renderLoop = () ->
