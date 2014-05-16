@@ -19,24 +19,20 @@
         <!-- Fragment Shader //-->
         <script id="shader-fs" type="x-shader/x-fragment">
 precision mediump float;
-uniform sampler2D u_Sampler1;
-uniform sampler2D u_Sampler2;
-varying vec2 v_TexCoord;
+varying vec4 v_Color;
 void main(void)  {
-  vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-  vec4 color2 = texture2D(u_Sampler2, v_TexCoord);
-  gl_FragColor = color2 * color1;
+  gl_FragColor = v_Color;
 }
 </script>
 
         <script id="shader-vs" type="x-shader/x-vertex">
 attribute vec4 a_Position;
-attribute vec2 a_TexCoord;
-varying vec2 v_TexCoord;
-uniform mat4 uMatrix;
+attribute vec4 a_Color;
+varying vec4 v_Color;
+uniform mat4 u_mvMatrix;
 void main(void) {
-  gl_Position = uMatrix * a_Position;
-  v_TexCoord = a_TexCoord;
+  gl_Position = u_mvMatrix * a_Position;
+  v_Color = a_Color;
 }
 </script>
 

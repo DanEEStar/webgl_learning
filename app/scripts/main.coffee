@@ -43,13 +43,14 @@ class HelloWorld
     @gl = @createWebGLContext()
     @prg = @initShaders(@gl)
     @numVertices = @initBuffers(@gl, @prg)
-    @initTextures(@gl, @prg)
+    #@initTextures(@gl, @prg)
 
     @tx = 0.0
     @ty = 0.0
     @radianAngle = 0
+    @eyeX = 0.2
 
-    @modelView = mat4.create()
+    @mvMatrix = mat4.create()
 
     @canvas = document.getElementById('canvas')
     @canvas.onmousedown = (evt) =>
@@ -65,33 +66,38 @@ class HelloWorld
     gl.linkProgram(prg);
     gl.useProgram(prg);
 
-    prg.uMatrix = gl.getUniformLocation(prg, 'uMatrix')
+    prg.u_mvMatrix = gl.getUniformLocation(prg, 'u_mvMatrix')
     prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
-    prg.a_TexCoord = gl.getAttribLocation(prg, 'a_TexCoord')
+    prg.a_Color = gl.getAttribLocation(prg, 'a_Color')
 
-    prg.u_Sampler1 = gl.getUniformLocation(prg, 'u_Sampler1')
-    prg.u_Sampler2 = gl.getUniformLocation(prg, 'u_Sampler2')
     return prg
 
   initBuffers: (gl, prg) ->
     vertices = new Float32Array([
-      -0.5, 0.5, 0.0, 1.0,
-      -0.5, -0.5, 0.0, 0.0,
-      0.5, 0.5, 1.0, 1.0,
-      0.5, -0.5, 1.0, 0.0
+      0.0,  0.5,  -0.4,  0.4,  1.0,  0.4,
+      -0.5, -0.5,  -0.4,  0.4,  1.0,  0.4,
+      0.5, -0.5,  -0.4,  1.0,  0.4,  0.4,
+
+      0.5,  0.4,  -0.2,  1.0,  0.4,  0.4,
+      -0.5,  0.4,  -0.2,  1.0,  1.0,  0.4,
+      0.0, -0.6,  -0.2,  1.0,  1.0,  0.4,
+
+      0.0,  0.5,   0.0,  0.4,  0.4,  1.0,
+      -0.5, -0.5,   0.0,  0.4,  0.4,  1.0,
+      0.5, -0.5,   0.0,  1.0,  0.4,  0.4,
     ])
 
     vertexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
 
-    gl.vertexAttribPointer(prg.a_Position, 2, gl.FLOAT, false, 4*4, 0)
+    gl.vertexAttribPointer(prg.a_Position, 3, gl.FLOAT, false, 4*6, 0)
     gl.enableVertexAttribArray(prg.a_Position)
 
-    gl.vertexAttribPointer(prg.a_TexCoord, 2, gl.FLOAT, false, 4*4, 8)
-    gl.enableVertexAttribArray(prg.a_TexCoord)
+    gl.vertexAttribPointer(prg.a_Color, 3, gl.FLOAT, false, 4*6, 4*3)
+    gl.enableVertexAttribArray(prg.a_Color)
 
-    return 4
+    return 9
 
   initTextures: (gl, prg) ->
     texture = gl.createTexture()
@@ -110,8 +116,6 @@ class HelloWorld
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, @loader.getImage('tex1'));
     gl.uniform1i(prg.u_Sampler2, 1)
 
-
-
   createWebGLContext: () ->
     return utils.getGLContext('canvas')
 
@@ -120,25 +124,36 @@ class HelloWorld
     #@ty += 0.002
     @radianAngle += 0.005
 
-    mat4.identity(@modelView)
-    mat4.translate(@modelView, @modelView, [@tx, @ty, 0])
-    mat4.rotateZ(@modelView, @modelView, @radianAngle)
+    mat4.identity(@mvMatrix)
+    mat4.lookAt(@mvMatrix, [@eyeX, 0.25, 0.25], [0, 0, 0], [0, 1, 0])
+    mat4.translate(@mvMatrix, @mvMatrix, [@tx, @ty, 0])
+    mat4.rotateZ(@mvMatrix, @mvMatrix, @radianAngle)
 
-    @gl.uniformMatrix4fv(@prg.uMatrix, false, @modelView)
+    @gl.uniformMatrix4fv(@prg.u_mvMatrix, false, @mvMatrix)
 
     @gl.clearColor(0.0, 0.0, 0.0, 1.0)
     @gl.clear(@gl.COLOR_BUFFER_BIT)
 
-    @gl.drawArrays(@gl.TRIANGLE_STRIP, 0, @numVertices)
+    @gl.drawArrays(@gl.TRIANGLES, 0, 9)
 
   handleClick: (evt) ->
     _.noop()
+
+  handleKeyDown: (evt) =>
+    if evt.keyCode == 39
+      @eyeX += 0.05
+    else if evt.keyCode == 37
+      @eyeX -= 0.05
+
 
 loader = new AssetLoader()
 loader.addImage('tex1', '/images/sky.jpg')
 loader.addImage('tex2', '/images/circle.gif')
 loader.start(() ->
   hl = new HelloWorld(loader)
+
+  $(document).on('keydown', hl.handleKeyDown)
+
   renderLoop = () ->
     utils.requestAnimFrame(renderLoop)
     hl.drawScene()
