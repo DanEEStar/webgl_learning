@@ -78,30 +78,51 @@ class HelloWorld
 
   initBuffers: (gl, prg) ->
     @vertices = new Float32Array([
-      0.0,  1.0,   0.0,  0.4,  0.4,  1.0,
-      -0.5, -1.0,   0.0,  0.4,  0.4,  1.0,
-      0.5, -1.0,   0.0,  1.0,  0.4,  0.4,
-
-      0.0,  1.0,  -4.0,  0.4,  1.0,  0.4,
-      -0.5, -1.0,  -4.0,  0.4,  1.0,  0.4,
-      0.5, -1.0,  -4.0,  1.0,  0.4,  0.4,
-
-      0.0,  1.0,  -2.0,  1.0,  1.0,  0.4,
-      -0.5, -1.0,  -2.0,  1.0,  1.0,  0.4,
-      0.5, -1.0,  -2.0,  1.0,  0.4,  0.4,
+      1.0,  1.0,  1.0,
+      -1.0,  1.0,  1.0,
+      -1.0, -1.0,  1.0,
+      1.0, -1.0,  1.0,
+      1.0, -1.0, -1.0,
+      1.0,  1.0, -1.0,
+      -1.0,  1.0, -1.0,
+      -1.0, -1.0, -1.0,
     ])
 
-    vertexBuffer = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, @vertices, gl.STATIC_DRAW)
+    @colors = new Float32Array([
+      1.0,  1.0,  1.0,
+      1.0,  0.0,  1.0,
+      1.0,  0.0,  0.0,
+      1.0,  1.0,  0.0,
+      0.0,  1.0,  0.0,
+      0.0,  1.0,  1.0,
+      0.0,  0.0,  1.0,
+      0.0,  0.0,  0.0
+    ])
 
-    gl.vertexAttribPointer(prg.a_Position, 3, gl.FLOAT, false, 4*6, 0)
-    gl.enableVertexAttribArray(prg.a_Position)
+    @indices = new Uint8Array([
+      0, 1, 2,   0, 2, 3,
+      0, 3, 4,   0, 4, 5,
+      0, 5, 6,   0, 6, 1,
+      1, 6, 7,   1, 7, 2,
+      7, 4, 3,   7, 3, 2,
+      4, 7, 6,   4, 6, 5
+    ])
 
-    gl.vertexAttribPointer(prg.a_Color, 3, gl.FLOAT, false, 4*6, 4*3)
-    gl.enableVertexAttribArray(prg.a_Color)
+    @initArrayBuffer(gl, @vertices, prg.a_Position)
+    @initArrayBuffer(gl, @colors, prg.a_Color)
 
-    return 9
+    indexBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, @indices, gl.STATIC_DRAW)
+
+    return @indices.length
+
+  initArrayBuffer: (gl, data, attribute, num=3, type=gl.FLOAT) ->
+    buffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+    gl.vertexAttribPointer(attribute, num, type, false, 0, 0)
+    gl.enableVertexAttribArray(attribute)
 
   initTextures: (gl, prg) ->
     texture = gl.createTexture()
@@ -131,13 +152,13 @@ class HelloWorld
     @radianAngle += 0.005
     mat4.lookAt(@vMatrix, [@eyeX, 0, 5], [0, 0, 0], [0, 1, 0])
 
-    @drawTriangleGroup(0.75)
-    @drawTriangleGroup(-0.75)
+    @drawTriangleGroup(0.75, -0.5)
+    #@drawTriangleGroup(-0.75)
 
   drawTriangleGroup: (x=0, y=0, z=0) ->
     mat4.identity(@mMatrix)
     mat4.translate(@mMatrix, @mMatrix, [x, y, z])
-    mat4.rotateZ(@mMatrix, @mMatrix, @radianAngle)
+    mat4.rotateX(@mMatrix, @mMatrix, @radianAngle)
 
     mat4.identity(@mvpMatrix)
     mat4.multiply(@mvpMatrix, @mvpMatrix, @pMatrix)
@@ -145,7 +166,8 @@ class HelloWorld
     mat4.multiply(@mvpMatrix, @mvpMatrix, @mMatrix)
 
     @gl.uniformMatrix4fv(@prg.u_mvpMatrix, false, @mvpMatrix)
-    @gl.drawArrays(@gl.TRIANGLES, 0, @numVertices)
+    #@gl.drawArrays(@gl.TRIANGLES, 0, @numVertices)
+    @gl.drawElements(@gl.TRIANGLES, @numVertices, @gl.UNSIGNED_BYTE, 0)
 
   handleClick: (evt) ->
     _.noop()
