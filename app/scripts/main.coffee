@@ -48,9 +48,13 @@ class HelloWorld
     @tx = 0.0
     @ty = 0.0
     @radianAngle = 0
-    @eyeX = 0.2
+    @eyeX = 0.0
 
-    @mvMatrix = mat4.create()
+    @mMatrix = mat4.create()
+    @pMatrix = mat4.create()
+    @vMatrix = mat4.create()
+    @mvpMatrix = mat4.create()
+    mat4.perspective(@pMatrix, 3.14/3, 1, 1, 100)
 
     @canvas = document.getElementById('canvas')
     @canvas.onmousedown = (evt) =>
@@ -66,30 +70,30 @@ class HelloWorld
     gl.linkProgram(prg);
     gl.useProgram(prg);
 
-    prg.u_mvMatrix = gl.getUniformLocation(prg, 'u_mvMatrix')
+    prg.u_mvpMatrix = gl.getUniformLocation(prg, 'u_mvpMatrix')
     prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
     prg.a_Color = gl.getAttribLocation(prg, 'a_Color')
 
     return prg
 
   initBuffers: (gl, prg) ->
-    vertices = new Float32Array([
-      0.0,  0.5,  -0.4,  0.4,  1.0,  0.4,
-      -0.5, -0.5,  -0.4,  0.4,  1.0,  0.4,
-      0.5, -0.5,  -0.4,  1.0,  0.4,  0.4,
+    @vertices = new Float32Array([
+      0.0,  1.0,   0.0,  0.4,  0.4,  1.0,
+      -0.5, -1.0,   0.0,  0.4,  0.4,  1.0,
+      0.5, -1.0,   0.0,  1.0,  0.4,  0.4,
 
-      0.5,  0.4,  -0.2,  1.0,  0.4,  0.4,
-      -0.5,  0.4,  -0.2,  1.0,  1.0,  0.4,
-      0.0, -0.6,  -0.2,  1.0,  1.0,  0.4,
+      0.0,  1.0,  -4.0,  0.4,  1.0,  0.4,
+      -0.5, -1.0,  -4.0,  0.4,  1.0,  0.4,
+      0.5, -1.0,  -4.0,  1.0,  0.4,  0.4,
 
-      0.0,  0.5,   0.0,  0.4,  0.4,  1.0,
-      -0.5, -0.5,   0.0,  0.4,  0.4,  1.0,
-      0.5, -0.5,   0.0,  1.0,  0.4,  0.4,
+      0.0,  1.0,  -2.0,  1.0,  1.0,  0.4,
+      -0.5, -1.0,  -2.0,  1.0,  1.0,  0.4,
+      0.5, -1.0,  -2.0,  1.0,  0.4,  0.4,
     ])
 
     vertexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+    gl.bufferData(gl.ARRAY_BUFFER, @vertices, gl.STATIC_DRAW)
 
     gl.vertexAttribPointer(prg.a_Position, 3, gl.FLOAT, false, 4*6, 0)
     gl.enableVertexAttribArray(prg.a_Position)
@@ -120,21 +124,28 @@ class HelloWorld
     return utils.getGLContext('canvas')
 
   drawScene: () ->
-    #@tx += 0.001
-    #@ty += 0.002
-    @radianAngle += 0.005
-
-    mat4.identity(@mvMatrix)
-    mat4.lookAt(@mvMatrix, [@eyeX, 0.25, 0.25], [0, 0, 0], [0, 1, 0])
-    mat4.translate(@mvMatrix, @mvMatrix, [@tx, @ty, 0])
-    mat4.rotateZ(@mvMatrix, @mvMatrix, @radianAngle)
-
-    @gl.uniformMatrix4fv(@prg.u_mvMatrix, false, @mvMatrix)
-
+    @gl.enable(@gl.DEPTH_TEST)
     @gl.clearColor(0.0, 0.0, 0.0, 1.0)
-    @gl.clear(@gl.COLOR_BUFFER_BIT)
+    @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT)
 
-    @gl.drawArrays(@gl.TRIANGLES, 0, 9)
+    @radianAngle += 0.005
+    mat4.lookAt(@vMatrix, [@eyeX, 0, 5], [0, 0, 0], [0, 1, 0])
+
+    @drawTriangleGroup(0.75)
+    @drawTriangleGroup(-0.75)
+
+  drawTriangleGroup: (x=0, y=0, z=0) ->
+    mat4.identity(@mMatrix)
+    mat4.translate(@mMatrix, @mMatrix, [x, y, z])
+    mat4.rotateZ(@mMatrix, @mMatrix, @radianAngle)
+
+    mat4.identity(@mvpMatrix)
+    mat4.multiply(@mvpMatrix, @mvpMatrix, @pMatrix)
+    mat4.multiply(@mvpMatrix, @mvpMatrix, @vMatrix)
+    mat4.multiply(@mvpMatrix, @mvpMatrix, @mMatrix)
+
+    @gl.uniformMatrix4fv(@prg.u_mvpMatrix, false, @mvpMatrix)
+    @gl.drawArrays(@gl.TRIANGLES, 0, @numVertices)
 
   handleClick: (evt) ->
     _.noop()
@@ -144,7 +155,6 @@ class HelloWorld
       @eyeX += 0.05
     else if evt.keyCode == 37
       @eyeX -= 0.05
-
 
 loader = new AssetLoader()
 loader.addImage('tex1', '/images/sky.jpg')
