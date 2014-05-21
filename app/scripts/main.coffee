@@ -56,6 +56,9 @@ class HelloWorld
     @mvpMatrix = mat4.create()
     mat4.perspective(@pMatrix, 3.14/3, 1, 1, 100)
 
+    @lightDirection = vec3.create()
+    vec3.normalize(@lightDirection, [0.5, 3.0, 4.0])
+
     @canvas = document.getElementById('canvas')
     @canvas.onmousedown = (evt) =>
       @handleClick(evt)
@@ -71,45 +74,59 @@ class HelloWorld
     gl.useProgram(prg);
 
     prg.u_mvpMatrix = gl.getUniformLocation(prg, 'u_mvpMatrix')
+    prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor')
+    prg.u_LightDirection = gl.getUniformLocation(prg, 'u_LightDirection')
+    prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor')
+
     prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
     prg.a_Color = gl.getAttribLocation(prg, 'a_Color')
+    prg.a_Normal = gl.getAttribLocation(prg, 'a_Normal')
 
     return prg
 
   initBuffers: (gl, prg) ->
     @vertices = new Float32Array([
-      1.0,  1.0,  1.0,
-      -1.0,  1.0,  1.0,
-      -1.0, -1.0,  1.0,
-      1.0, -1.0,  1.0,
-      1.0, -1.0, -1.0,
-      1.0,  1.0, -1.0,
-      -1.0,  1.0, -1.0,
-      -1.0, -1.0, -1.0,
-    ])
+      1.0, 1.0, 1.0,  -1.0, 1.0, 1.0,  -1.0,-1.0, 1.0,   1.0,-1.0, 1.0,
+      1.0, 1.0, 1.0,   1.0,-1.0, 1.0,   1.0,-1.0,-1.0,   1.0, 1.0,-1.0,
+      1.0, 1.0, 1.0,   1.0, 1.0,-1.0,  -1.0, 1.0,-1.0,  -1.0, 1.0, 1.0,
+      -1.0, 1.0, 1.0,  -1.0, 1.0,-1.0,  -1.0,-1.0,-1.0,  -1.0,-1.0, 1.0,
+      -1.0,-1.0,-1.0,   1.0,-1.0,-1.0,   1.0,-1.0, 1.0,  -1.0,-1.0, 1.0,
+      1.0,-1.0,-1.0,  -1.0,-1.0,-1.0,  -1.0, 1.0,-1.0,   1.0, 1.0,-1.0
+    ]);
+
 
     @colors = new Float32Array([
-      1.0,  1.0,  1.0,
-      1.0,  0.0,  1.0,
-      1.0,  0.0,  0.0,
-      1.0,  1.0,  0.0,
-      0.0,  1.0,  0.0,
-      0.0,  1.0,  1.0,
-      0.0,  0.0,  1.0,
-      0.0,  0.0,  0.0
-    ])
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
+      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0
+    ]);
+
+
+    @normals = new Float32Array([
+      0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,
+       1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,
+       0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,
+       -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,
+       0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,
+       0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0
+    ]);
+
 
     @indices = new Uint8Array([
       0, 1, 2,   0, 2, 3,
-      0, 3, 4,   0, 4, 5,
-      0, 5, 6,   0, 6, 1,
-      1, 6, 7,   1, 7, 2,
-      7, 4, 3,   7, 3, 2,
-      4, 7, 6,   4, 6, 5
-    ])
+      4, 5, 6,   4, 6, 7,
+      8, 9,10,   8,10,11,
+      12,13,14,  12,14,15,
+      16,17,18,  16,18,19,
+      20,21,22,  20,22,23
+    ]);
 
     @initArrayBuffer(gl, @vertices, prg.a_Position)
     @initArrayBuffer(gl, @colors, prg.a_Color)
+    @initArrayBuffer(gl, @normals, prg.a_Normal)
 
     indexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
@@ -149,16 +166,19 @@ class HelloWorld
     @gl.clearColor(0.0, 0.0, 0.0, 1.0)
     @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT)
 
+    @gl.uniform3fv(@prg.u_LightDirection, @lightDirection)
+    @gl.uniform3fv(@prg.u_LightColor, [1.0, 1.0, 1.0])
+
     @radianAngle += 0.005
     mat4.lookAt(@vMatrix, [@eyeX, 0, 5], [0, 0, 0], [0, 1, 0])
 
-    @drawTriangleGroup(0.75, -0.5)
+    @drawTriangleGroup(0, 0)
     #@drawTriangleGroup(-0.75)
 
   drawTriangleGroup: (x=0, y=0, z=0) ->
     mat4.identity(@mMatrix)
     mat4.translate(@mMatrix, @mMatrix, [x, y, z])
-    mat4.rotateX(@mMatrix, @mMatrix, @radianAngle)
+    mat4.rotate(@mMatrix, @mMatrix, @radianAngle, [1, 1, 0])
 
     mat4.identity(@mvpMatrix)
     mat4.multiply(@mvpMatrix, @mvpMatrix, @pMatrix)
