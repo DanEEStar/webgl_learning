@@ -31,14 +31,17 @@ attribute vec4 a_Color;
 attribute vec4 a_Normal;
 varying vec4 v_Color;
 uniform mat4 u_mvpMatrix;
+uniform mat4 u_normalMatrix;
 uniform vec3 u_LightColor;
 uniform vec3 u_LightDirection;
+uniform vec3 u_AmbientLight;
 void main(void) {
   gl_Position = u_mvpMatrix * a_Position;
-  vec3 normal = normalize(vec3(a_Normal));
+  vec3 normal = normalize(vec3(u_normalMatrix * a_Normal));
   float d = max(dot(u_LightDirection, normal), 0.0);
   vec3 diffuse = u_LightColor * vec3(a_Color) * d;
-  v_Color = vec4(diffuse, a_Color.a);
+  vec3 ambient = u_AmbientLight * a_Color.rgb;
+  v_Color = vec4(diffuse + ambient, a_Color.a);
 }
 </script>
 
@@ -64,7 +67,7 @@ void main(void) {
 
         <!-- build:js scripts/main.js -->
         <script src="scripts/libs/utils.js"></script>
-        <script src="scripts/appbuild.js"></script>
+        <script src="scripts/cube.js"></script>
         <!-- endbuild -->
 </body>
 </html>

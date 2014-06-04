@@ -54,6 +54,7 @@ class HelloWorld
     @pMatrix = mat4.create()
     @vMatrix = mat4.create()
     @mvpMatrix = mat4.create()
+    @normalMatrix = mat4.create()
     mat4.perspective(@pMatrix, 3.14/3, 1, 1, 100)
 
     @lightDirection = vec3.create()
@@ -74,9 +75,11 @@ class HelloWorld
     gl.useProgram(prg);
 
     prg.u_mvpMatrix = gl.getUniformLocation(prg, 'u_mvpMatrix')
+    prg.u_normalMatrix = gl.getUniformLocation(prg, 'u_normalMatrix')
     prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor')
     prg.u_LightDirection = gl.getUniformLocation(prg, 'u_LightDirection')
     prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor')
+    prg.u_AmbientLight = gl.getUniformLocation(prg, 'u_AmbientLight')
 
     prg.a_Position = gl.getAttribLocation(prg, 'a_Position')
     prg.a_Color = gl.getAttribLocation(prg, 'a_Color')
@@ -96,12 +99,12 @@ class HelloWorld
 
 
     @colors = new Float32Array([
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0,
-      1, 0, 0,   1, 0, 0,   1, 0, 0,  1, 0, 0
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  0, 0, 1,
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  0, 0, 1,
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  0, 0, 1,
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  0, 0, 1,
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  0, 0, 1,
+      0, 0, 1,   0, 0, 1,   0, 0, 1,  1, 0, 0
     ]);
 
 
@@ -168,6 +171,7 @@ class HelloWorld
 
     @gl.uniform3fv(@prg.u_LightDirection, @lightDirection)
     @gl.uniform3fv(@prg.u_LightColor, [1.0, 1.0, 1.0])
+    @gl.uniform3fv(@prg.u_AmbientLight, [0.2, 0.2, 0.2])
 
     @radianAngle += 0.005
     mat4.lookAt(@vMatrix, [@eyeX, 0, 5], [0, 0, 0], [0, 1, 0])
@@ -179,6 +183,11 @@ class HelloWorld
     mat4.identity(@mMatrix)
     mat4.translate(@mMatrix, @mMatrix, [x, y, z])
     mat4.rotate(@mMatrix, @mMatrix, @radianAngle, [1, 1, 0])
+
+    mat4.identity(@normalMatrix)
+    mat4.invert(@normalMatrix, @mMatrix)
+    mat4.transpose(@normalMatrix, @normalMatrix)
+    @gl.uniformMatrix4fv(@prg.u_normalMatrix, false, @normalMatrix)
 
     mat4.identity(@mvpMatrix)
     mat4.multiply(@mvpMatrix, @mvpMatrix, @pMatrix)
