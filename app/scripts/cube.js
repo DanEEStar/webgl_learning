@@ -5,6 +5,12 @@
     var width = canvas.width;
     var height = canvas.height;
 
+    var cubeColor = {
+        r: 0.0,
+        g: 0.0,
+        b: 1.0
+    };
+
     var gl = initWebGL(document.getElementById('canvas'));
     var prg = initShaders(gl);
     var numVertices = initBuffers(gl, prg);
@@ -42,6 +48,7 @@
         gl.uniform3fv(prg.u_LightDirection, lightDirection);
         gl.uniform3fv(prg.u_LightColor, [1.0, 1.0, 1.0]);
         gl.uniform3fv(prg.u_AmbientLight, [0.2, 0.2, 0.2]);
+        gl.uniform4fv(prg.u_Color, [cubeColor.r, cubeColor.g, cubeColor.b, 1.0]);
 
         mat4.lookAt(vMatrix, [0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
@@ -79,15 +86,6 @@
             1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0
         ]);
 
-        var colors = new Float32Array([
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1
-        ]);
-
         var normals = new Float32Array([
             0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
             1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
@@ -107,7 +105,6 @@
         ]);
 
         initArrayBuffer(gl, vertices, prg.a_Position, 3, gl.FLOAT);
-        initArrayBuffer(gl, colors, prg.a_Color, 3, gl.FLOAT);
         initArrayBuffer(gl, normals, prg.a_Normal, 3, gl.FLOAT);
 
         var indexBuffer = gl.createBuffer();
@@ -142,6 +139,8 @@
         prg.u_LightDirection = gl.getUniformLocation(prg, 'u_LightDirection');
         prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor');
         prg.u_AmbientLight = gl.getUniformLocation(prg, 'u_AmbientLight');
+
+        prg.u_Color = gl.getUniformLocation(prg, 'u_Color');
 
         prg.a_Position = gl.getAttribLocation(prg, 'a_Position');
         prg.a_Color = gl.getAttribLocation(prg, 'a_Color');
@@ -191,6 +190,24 @@
         }
         return shader;
     }
+
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    $('#color').change(function(evt) {
+        var hexColor = $('#color').val();
+        var rgbColor = (hexToRgb(hexColor));
+        cubeColor.r = rgbColor.r / 255;
+        cubeColor.g = rgbColor.g / 255;
+        cubeColor.b = rgbColor.b / 255;
+    });
+
 }());
 
 
