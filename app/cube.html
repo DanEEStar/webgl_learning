@@ -2,28 +2,18 @@
 <html class="no-js">
 <head>
     <meta charset="utf-8">
-    <title>WebGL Demo</title>
+    <title>WebGL Cube Demo</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-
-    <!-- build:css styles/vendor.css -->
-    <!-- bower:css -->
-    <!-- endbower -->
-    <!-- endbuild -->
-
-    <!-- build:css styles/main.css -->
-    <link rel="stylesheet" href="styles/main.css">
-    <!-- endbuild -->
 
     <!-- Fragment Shader //-->
     <script id="shader-fs" type="x-shader/x-fragment">
-precision mediump float;
-varying vec4 v_Color;
-void main(void)  {
-  gl_FragColor = v_Color;
-}
-</script>
+        precision mediump float;
+        varying vec4 v_Color;
+        void main(void)  {
+            gl_FragColor = v_Color;
+        }
+    </script>
 
     <script id="shader-vs" type="x-shader/x-vertex">
         attribute vec4 a_Position;
@@ -44,22 +34,16 @@ void main(void)  {
             vec3 ambient = u_AmbientLight * a_Color.rgb;
             v_Color = vec4(diffuse + ambient, a_Color.a);
         }
-
     </script>
-
 </head>
 <body>
 <!--[if lt IE 10]>
 <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
 <![endif]-->
 
-<canvas id="canvas" width="800" height="800">
+<canvas id="canvas" width="1024" height="768">
     Your browser does not support canvas
 </canvas>
-
-
-
-
 
 <!-- build:js scripts/vendor.js -->
 <script src="bower_components/gl-matrix/dist/gl-matrix.js"></script>

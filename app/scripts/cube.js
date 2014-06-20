@@ -1,6 +1,10 @@
 (function() {
     "use strict";
 
+    var canvas = document.getElementById('canvas');
+    var width = canvas.width;
+    var height = canvas.height;
+
     var gl = initWebGL(document.getElementById('canvas'));
     var prg = initShaders(gl);
     var numVertices = initBuffers(gl, prg);
@@ -10,7 +14,7 @@
     var vMatrix = mat4.create();
     var mvpMatrix = mat4.create();
     var normalMatrix = mat4.create();
-    mat4.perspective(pMatrix, 3.14159/3, 1, 1, 100);
+    mat4.perspective(pMatrix, 3.14159/3, width/height, 1, 100);
 
     var lightDirection = vec3.create();
     vec3.normalize(lightDirection, [0.5, 3.0, 4.0]);
@@ -35,11 +39,11 @@
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.uniform3fv(prg.u_LightDirection, lightDirection)
-        gl.uniform3fv(prg.u_LightColor, [1.0, 1.0, 1.0])
-        gl.uniform3fv(prg.u_AmbientLight, [0.2, 0.2, 0.2])
+        gl.uniform3fv(prg.u_LightDirection, lightDirection);
+        gl.uniform3fv(prg.u_LightColor, [1.0, 1.0, 1.0]);
+        gl.uniform3fv(prg.u_AmbientLight, [0.2, 0.2, 0.2]);
 
-        mat4.lookAt(vMatrix, [0, 0, 5], [0, 0, 0], [0, 1, 0])
+        mat4.lookAt(vMatrix, [0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
         drawTriangleGroup(0, 0, 0)
     }
@@ -131,6 +135,7 @@
         gl.linkProgram(prg);
         gl.useProgram(prg);
 
+        // load all the shader variables from the shaders, look at the shader source code in the html file
         prg.u_mvpMatrix = gl.getUniformLocation(prg, 'u_mvpMatrix');
         prg.u_normalMatrix = gl.getUniformLocation(prg, 'u_normalMatrix');
         prg.u_LightColor = gl.getUniformLocation(prg, 'u_LightColor');
@@ -142,9 +147,10 @@
         prg.a_Color = gl.getAttribLocation(prg, 'a_Color');
         prg.a_Normal = gl.getAttribLocation(prg, 'a_Normal');
 
-        return prg
+        return prg;
     }
 
+    // create the WebGL context
     function initWebGL(canvasId) {
         var gl;
 
@@ -161,6 +167,9 @@
         return gl;
     }
 
+    /*
+     * load and compile shader from the html file
+     */
     function getShader(gl, id) {
         var script = document.getElementById(id);
 
