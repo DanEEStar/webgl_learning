@@ -111,7 +111,7 @@
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-        return indices.length
+        return indices.length;
     }
 
     function initArrayBuffer(gl, data, attribute, num, type) {
@@ -124,7 +124,7 @@
 
     function initShaders(gl) {
         var fgShader = getShader(gl, 'shader-fs');
-        var vxShader = getShader(gl, 'shader-vs')
+        var vxShader = getShader(gl, 'shader-vs');
 
         var prg = gl.createProgram();
         gl.attachShader(prg, vxShader);
@@ -173,9 +173,9 @@
         var script = document.getElementById(id);
 
         var shader;
-        if (script.type == "x-shader/x-fragment") {
+        if (script.type === "x-shader/x-fragment") {
             shader = gl.createShader(gl.FRAGMENT_SHADER);
-        } else if (script.type == "x-shader/x-vertex") {
+        } else if (script.type === "x-shader/x-vertex") {
             shader = gl.createShader(gl.VERTEX_SHADER);
         } else {
             shader = null;
@@ -200,8 +200,8 @@
         } : null;
     }
 
-    $('#color').change(function(evt) {
-        var hexColor = $('#color').val();
+    document.querySelector("#color").addEventListener('change', function(evt) {
+        var hexColor = evt.srcElement.value;
         var rgbColor = (hexToRgb(hexColor));
         cubeColor.r = rgbColor.r / 255;
         cubeColor.g = rgbColor.g / 255;

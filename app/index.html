@@ -1,73 +1,60 @@
 <!doctype html>
 <html class="no-js">
-    <head>
-        <meta charset="utf-8">
-        <title>WebGL Demo</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+<head>
+    <meta charset="utf-8">
+    <title>WebGL Cube Demo</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- build:css styles/vendor.css -->
-        <!-- bower:css -->
-        <!-- endbower -->
-        <!-- endbuild -->
+    <!-- Fragment Shader //-->
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 v_Color;
+        void main(void)  {
+            gl_FragColor = v_Color;
+        }
+    </script>
 
-        <!-- build:css styles/main.css -->
-        <link rel="stylesheet" href="styles/main.css">
-        <!-- endbuild -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec4 a_Position;
+        attribute vec4 a_Normal;
+        varying vec4 v_Color;
+        uniform mat4 u_mvpMatrix;
+        uniform mat4 u_normalMatrix;
+        uniform vec3 u_LightColor;
+        uniform vec3 u_LightDirection;
+        uniform vec3 u_AmbientLight;
+        uniform vec4 u_Color;
 
-        <!-- Fragment Shader //-->
-        <script id="shader-fs" type="x-shader/x-fragment">
-precision mediump float;
-varying vec4 v_Color;
-void main(void)  {
-  gl_FragColor = v_Color;
-}
-</script>
+        void main(void) {
+            gl_Position = u_mvpMatrix * a_Position;
+            vec3 normal = normalize(vec3(u_normalMatrix * a_Normal));
+            float d = max(dot(u_LightDirection, normal), 0.0);
+            vec3 diffuse = u_LightColor * vec3(u_Color) * d;
+            vec3 ambient = u_AmbientLight * u_Color.rgb;
+            v_Color = vec4(diffuse + ambient, u_Color.a);
+        }
+    </script>
+</head>
+<body>
+<!--[if lt IE 10]>
+<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+<![endif]-->
 
-        <script id="shader-vs" type="x-shader/x-vertex">
-attribute vec4 a_Position;
-attribute vec4 a_Color;
-attribute vec4 a_Normal;
-varying vec4 v_Color;
-uniform mat4 u_mvpMatrix;
-uniform mat4 u_normalMatrix;
-uniform vec3 u_LightColor;
-uniform vec3 u_LightDirection;
-uniform vec3 u_AmbientLight;
-void main(void) {
-  gl_Position = u_mvpMatrix * a_Position;
-  vec3 normal = normalize(vec3(u_normalMatrix * a_Normal));
-  float d = max(dot(u_LightDirection, normal), 0.0);
-  vec3 diffuse = u_LightColor * vec3(a_Color) * d;
-  vec3 ambient = u_AmbientLight * a_Color.rgb;
-  v_Color = vec4(diffuse + ambient, a_Color.a);
-}
-</script>
+<canvas id="canvas" width="1024" height="768">
+    Your browser does not support canvas
+</canvas>
 
-    </head>
-    <body>
-        <!--[if lt IE 10]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
+<p>
+    <input id="color" name="color" type="color" value="#0000ff">
+</p>
 
-        <canvas id="canvas" width="800" height="800">
-            Your browser does not support canvas
-        </canvas>
+<!-- build:js scripts/vendor.js -->
+<script src="node_modules/gl-matrix/dist/gl-matrix.js"></script>
+<!-- endbuild -->
 
-
-
-
-
-        <!-- build:js scripts/vendor.js -->
-        <script src="bower_components/jquery/dist/jquery.js"></script>
-        <script src="bower_components/lodash/dist/lodash.js"></script>
-        <script src="bower_components/gl-matrix/dist/gl-matrix.js"></script>
-        <!-- endbuild -->
-
-        <!-- build:js scripts/main.js -->
-        <script src="scripts/libs/utils.js"></script>
-        <script src="scripts/cube.js"></script>
-        <!-- endbuild -->
+<!-- build:js scripts/main.js -->
+<script src="scripts/cube.js"></script>
+<!-- endbuild -->
 </body>
 </html>
