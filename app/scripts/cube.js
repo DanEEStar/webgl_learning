@@ -31,7 +31,7 @@
 
 
     function renderLoop() {
-        requestAnimationFrame(renderLoop);
+        window.requestAnimationFrame(renderLoop);
         update();
         drawScene();
     }
@@ -52,7 +52,7 @@
 
         mat4.lookAt(vMatrix, [0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
-        drawTriangleGroup(0, 0, 0)
+        drawTriangleGroup(0, 0, 0);
     }
 
     function drawTriangleGroup(x, y, z) {
